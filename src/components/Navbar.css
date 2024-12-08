@@ -1,0 +1,26 @@
+/* Navbar.css */
+.navbar {
+    margin-bottom: 20px;
+  }
+  
+  .navbar-brand {
+    font-weight: bold;
+    color: #5a5a5a;
+  }
+  
+  .nav-link {
+    font-size: 16px;
+  }
+  
+  .navbar-toggler-icon {
+    background-color: #333;
+  }
+  
+  .navbar-nav .nav-link:hover {
+    color: #007bff;
+  }
+  
+  .navbar-nav .nav-item.active .nav-link {
+    color: #007bff !important;
+  }
+  
