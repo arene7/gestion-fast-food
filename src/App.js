@@ -8,8 +8,9 @@ import Register from './components/Register';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Reservas from './components/Reservas';
+import ReservationPage from './components/ReservationPage'; // Asegúrate de importar la nueva página
 import Navbar from './components/Navbar';
-import { auth, db } from './firebase';  // Importa auth y db
+import { auth, db } from './firebase';
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -51,16 +52,15 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          {/* Solo permite acceder a /dashboard si hay un usuario autenticado */}
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
-          {/* Ruta protegida: solo los usuarios con ciertos roles pueden acceder */}
           <Route 
             path="/reservas" 
             element={user && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
               ? <Reservas /> 
               : <Navigate to="/login" />}
           />
-          {/* Agregar más rutas protegidas si es necesario */}
+          {/* Ruta para usuarios no autenticados */}
+          <Route path="/reservar" element={<ReservationPage />} />
         </Routes>
       </div>
     </Router>

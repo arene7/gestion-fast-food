@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { db, auth } from '../firebase'; // Asegúrate de importar Firebase
+import { collection, addDoc } from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 
 const ReservationPage = () => {
@@ -10,7 +12,7 @@ const ReservationPage = () => {
     mesa: '',
     email: '', // Añadimos el campo de correo electrónico
   });
-  
+
   const [mensaje, setMensaje] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -24,7 +26,7 @@ const ReservationPage = () => {
   };
 
   // Maneja el envío del formulario
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Verifica si la mesa está disponible (suponiendo que las mesas están numeradas del 1 al 12)
@@ -34,27 +36,45 @@ const ReservationPage = () => {
       return;
     }
 
-    // Enviar la reserva al correo del usuario
-    const templateParams = {
-      nombreCompleto: formData.nombreCompleto,
-      fecha: formData.fecha,
-      hora: formData.hora,
-      numeroDePersonas: formData.numeroDePersonas,
-      mesa: formData.mesa,
-      email: formData.email, // Añadimos el correo del usuario
-    };
-
-    emailjs
-      .send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams, 'YOUR_USER_ID')
-      .then((response) => {
-        console.log('¡Éxito!', response.status, response.text);
-        setIsSubmitted(true);
-        setMensaje('Tu reservación ha sido realizada con éxito.');
-      })
-      .catch((err) => {
-        console.error('Error', err);
-        setMensaje('Error al enviar la reservación. Por favor, inténtalo de nuevo más tarde.');
+    // Crea el documento de reserva en Firestore
+    try {
+      await addDoc(collection(db, 'reservas'), {
+        nombreCompleto: formData.nombreCompleto,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        numeroDePersonas: formData.numeroDePersonas,
+        mesa: formData.mesa,
+        email: formData.email,
+        usuarioId: auth.currentUser ? auth.currentUser.uid : null, // Guardar el UID del usuario si está autenticado
+        creadoEn: new Date(), // Fecha de creación
       });
+
+      // Enviar el correo con EmailJS
+      const templateParams = {
+        nombreCompleto: formData.nombreCompleto,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        numeroDePersonas: formData.numeroDePersonas,
+        mesa: formData.mesa,
+        email: formData.email, // Correo electrónico del usuario
+      };
+      
+
+      emailjs.send('service_yfapbmq', 'template_3hudx86', templateParams, 'up8P-mUB4GN94Koks')
+        .then((response) => {
+          console.log('¡Éxito!', response.status, response.text);
+          setIsSubmitted(true);
+          setMensaje('Tu reservación ha sido realizada con éxito.');
+        })
+        .catch((err) => {
+          console.error('Error', err);
+          setMensaje('Error al enviar la reservación. Por favor, inténtalo de nuevo más tarde.');
+        });
+
+    } catch (err) {
+      console.error('Error al guardar la reserva:', err);
+      setMensaje('Error al realizar la reservación. Por favor, inténtalo de nuevo más tarde.');
+    }
 
     // Limpiar el formulario después de enviar
     setFormData({

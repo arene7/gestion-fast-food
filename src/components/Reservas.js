@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { db } from '../firebase'; // Asegúrate de importar tu configuración de Firebase
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore'; 
 import emailjs from 'emailjs-com';
 
 const ReservationForm = () => {
@@ -9,9 +11,30 @@ const ReservationForm = () => {
     numeroDePersonas: '',
     mesa: '',
   });
-  
+
   const [mensaje, setMensaje] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [reservas, setReservas] = useState([]);
+  const [editingReserva, setEditingReserva] = useState(null); // Estado para saber si estamos editando una reserva
+
+  // Función para obtener todas las reservas desde Firestore
+  const fetchReservas = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, 'reservas'));
+      const reservasList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setReservas(reservasList);
+    } catch (error) {
+      console.error('Error al obtener las reservas:', error);
+    }
+  };
+
+  // Llamar a fetchReservas cuando el componente se monta
+  useEffect(() => {
+    fetchReservas();
+  }, []);
 
   // Actualiza el estado formData cuando cambian los valores de entrada
   const handleChange = (e) => {
@@ -48,6 +71,7 @@ const ReservationForm = () => {
         console.log('¡Éxito!', response.status, response.text);
         setIsSubmitted(true);
         setMensaje('Tu reservación ha sido realizada con éxito.');
+        fetchReservas(); // Recargar reservas después de agregar una nueva
       })
       .catch((err) => {
         console.error('Error', err);
@@ -55,11 +79,45 @@ const ReservationForm = () => {
       });
   };
 
+  // Maneja la edición de una reserva
+  const handleEdit = (reserva) => {
+    setEditingReserva(reserva);
+    setFormData({
+      nombreCompleto: reserva.nombreCompleto,
+      fecha: reserva.fecha,
+      hora: reserva.hora,
+      numeroDePersonas: reserva.numeroDePersonas,
+      mesa: reserva.mesa,
+    });
+  };
+
+  // Maneja el guardado de la reserva editada
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const reservaRef = doc(db, 'reservas', editingReserva.id);
+      await updateDoc(reservaRef, {
+        nombreCompleto: formData.nombreCompleto,
+        fecha: formData.fecha,
+        hora: formData.hora,
+        numeroDePersonas: formData.numeroDePersonas,
+        mesa: formData.mesa,
+      });
+
+      setMensaje('Reserva actualizada con éxito.');
+      setEditingReserva(null); // Terminar la edición
+      fetchReservas(); // Recargar las reservas
+    } catch (err) {
+      console.error('Error al actualizar la reserva:', err);
+      setMensaje('Error al actualizar la reserva. Por favor, inténtalo de nuevo más tarde.');
+    }
+  };
+
   return (
     <div className="container">
       <h2 className="my-4">Hacer una Reservación</h2>
 
-      <form className="row g-3 needs-validation" noValidate onSubmit={handleSubmit}>
+      <form className="row g-3 needs-validation" noValidate onSubmit={editingReserva ? handleSaveEdit : handleSubmit}>
         <div className="col-md-6 position-relative">
           <label htmlFor="nombreCompleto" className="form-label">Nombre Completo</label>
           <input
@@ -132,7 +190,7 @@ const ReservationForm = () => {
 
         <div className="col-12">
           <button className="btn btn-primary" type="submit">
-            Enviar Reservación
+            {editingReserva ? 'Guardar Cambios' : 'Enviar Reservación'}
           </button>
         </div>
       </form>
@@ -142,6 +200,40 @@ const ReservationForm = () => {
           {mensaje}
         </div>
       )}
+
+      {/* Mostrar la tabla con las reservas */}
+      <h3 className="my-4">Reservas Realizadas</h3>
+      <table className="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Nombre Completo</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Número de Personas</th>
+            <th>Mesa</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reservas.map((reserva) => (
+            <tr key={reserva.id}>
+              <td>{reserva.nombreCompleto}</td>
+              <td>{reserva.fecha}</td>
+              <td>{reserva.hora}</td>
+              <td>{reserva.numeroDePersonas}</td>
+              <td>{reserva.mesa}</td>
+              <td>
+                <button
+                  className="btn btn-warning"
+                  onClick={() => handleEdit(reserva)}
+                >
+                  Editar
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
