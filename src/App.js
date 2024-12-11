@@ -8,7 +8,8 @@ import Register from './components/Register';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Reservas from './components/Reservas';
-import ReservationPage from './components/ReservationPage'; // Asegúrate de importar la nueva página
+import Perfiles from './components/Perfiles'; // Importa el componente Perfiles
+import ReservationPage from './components/ReservationPage';
 import Navbar from './components/Navbar';
 import { auth, db } from './firebase';
 
@@ -17,7 +18,6 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Configura el listener para cambios en el estado de autenticación
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         // Si el usuario está autenticado, obtenemos la información adicional del usuario desde Firestore
@@ -31,7 +31,6 @@ const App = () => {
       setLoading(false); // Establece loading en false cuando se completa la verificación
     });
 
-    // Cleanup listener al desmontar el componente
     return () => unsubscribe();
   }, []);
 
@@ -46,22 +45,39 @@ const App = () => {
   return (
     <Router>
       <div className="App">
-        {/* Renderizamos el Navbar siempre */}
+        {/* Navbar visible siempre */}
         <Navbar user={user} />
         <Routes>
+          {/* Ruta a la página de inicio */}
           <Route path="/" element={<Home />} />
+
+          {/* Rutas de autenticación */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Ruta al Dashboard solo si el usuario está autenticado */}
           <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+
+          {/* Ruta a Reservas solo accesible por ciertos roles */}
           <Route 
             path="/reservas" 
             element={user && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
               ? <Reservas /> 
               : <Navigate to="/login" />}
           />
-          {/* Ruta para usuarios no autenticados */}
+
+          {/* Ruta para hacer una reserva */}
           <Route path="/reservar" element={<ReservationPage />} />
+
+          {/* Ruta de Perfiles solo accesible por administradores */}
+          <Route 
+            path="/perfiles" 
+            element={user && hasRole(['administrador']) 
+              ? <Perfiles /> 
+              : <Navigate to="/login" />}
+          />
         </Routes>
+        
       </div>
     </Router>
   );
