@@ -1,0 +1,129 @@
+/* Container for the reservation orders */
+.container {
+  max-width: 1200px;
+  margin-top: 30px;
+}
+
+/* Heading styles */
+h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  text-align: center;
+}
+
+/* Card styling */
+.card {
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  color: #34495e;
+}
+
+.card-text {
+  color: #7f8c8d;
+}
+
+/* List item styles */
+.list-group-item {
+  border: 1px solid #ecf0f1;
+  padding: 10px;
+  background-color: #f9f9f9;
+}
+
+.list-group-item:hover {
+  background-color: #f1f1f1;
+}
+
+/* Styling for the input group (select and button) */
+.input-group {
+  margin-top: 10px;
+}
+
+.form-select {
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.btn {
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #3498db;
+}
+
+.btn-primary:hover {
+  background-color: #2980b9;
+}
+
+.btn-success {
+  background-color: #27ae60;
+}
+
+.btn-success:hover {
+  background-color: #2ecc71;
+}
+
+/* Reservation card responsiveness */
+@media (max-width: 768px) {
+  .col-md-4 {
+      max-width: 100%;
+      flex: 1 0 100%;
+  }
+}
+
+/* Add smooth transitions for collapsible chair orders */
+.collapse {
+  transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+}
+
+/* Hover effect for the card */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Card header with clickable styles */
+h6.cursor-pointer {
+  cursor: pointer;
+  color: #3498db;
+}
+
+h6.cursor-pointer:hover {
+  color: #2980b9;
+}
+
+/* Styling for the number of orders (badge) */
+.badge.bg-info {
+  font-size: 0.8rem;
+}
+
+/* Additional responsiveness for very small screens (max-width: 576px) */
+@media (max-width: 576px) {
+  .card-body {
+      padding: 15px;
+  }
+
+  .btn {
+      font-size: 0.85rem;
+  }
+}
+
+/* Sticky footer button (optional, if you add a global action button) */
+.sticky-footer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}

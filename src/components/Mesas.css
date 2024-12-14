@@ -30,4 +30,17 @@
     font-size: 1.8rem;
     color: #6c757d;
   }
+
+  .estado-select select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+  
+  .estado-select label {
+    margin-bottom: 5px;
+    display: block;
+  }
+  
   

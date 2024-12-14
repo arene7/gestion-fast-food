@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase'; // Configuración de Firebase
 import './Mesas.css'; // Archivo CSS para estilos personalizados
 
 const Mesas = () => {
   const [reservations, setReservations] = useState([]);
 
+  // Función para obtener las reservas
   useEffect(() => {
     const fetchReservations = async () => {
       try {
@@ -25,6 +26,25 @@ const Mesas = () => {
 
     fetchReservations();
   }, []);
+
+  // Función para actualizar el estado de la reserva
+  const handleChangeStatus = async (id, newStatus) => {
+    try {
+      const reservationRef = doc(db, 'reservations', id);
+      await updateDoc(reservationRef, {
+        estado: newStatus,
+      });
+
+      // Actualizar el estado localmente después del cambio
+      setReservations((prevReservations) =>
+        prevReservations.map((reserva) =>
+          reserva.id === id ? { ...reserva, estado: newStatus } : reserva
+        )
+      );
+    } catch (error) {
+      console.error("Error al actualizar el estado:", error);
+    }
+  };
 
   return (
     <div className="container mt-4 mesas-container">
@@ -58,6 +78,21 @@ const Mesas = () => {
                   ) : (
                     <p>No hay órdenes asignadas.</p>
                   )}
+                  <hr />
+                  {/* Selector para cambiar el estado */}
+                  <div className="estado-select mt-3">
+                    <label htmlFor={`estado-${reserva.id}`}><strong>Estado:</strong></label>
+                    <select
+                      id={`estado-${reserva.id}`}
+                      className="form-select"
+                      value={reserva.estado}
+                      onChange={(e) => handleChangeStatus(reserva.id, e.target.value)}
+                    >
+                      <option value="En proceso">En proceso</option>
+                      {/* <option value="Abierta">Abierta</option> */}
+                      <option value="Cerrada">Cerrada</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>

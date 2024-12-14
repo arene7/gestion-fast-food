@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../firebase"; // Importa tu configuración de Firebase
+import { db } from "../firebase"; // Import Firebase config
 import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 
 const Ordenes = () => {
@@ -21,7 +21,7 @@ const Ordenes = () => {
   }, []);
 
   return (
-    <div className="container mt-4">
+    <div className="container mt-5">
       <h1 className="text-center mb-4">Reservaciones en Proceso</h1>
       <div className="row">
         {reservations.map((reservation) => (
@@ -33,15 +33,15 @@ const Ordenes = () => {
 };
 
 const ReservationCard = ({ reservation }) => {
-  const { numeroDePersonas, assignedOrders = {} } = reservation; // Asegurar valor predeterminado para assignedOrders
+  const { numeroDePersonas, assignedOrders = {} } = reservation; // Default for assignedOrders
   const chairs = Array.from({ length: numeroDePersonas }, (_, i) => i + 1);
 
   return (
     <div className="col-md-4 mb-4">
-      <div className="card">
+      <div className="card shadow-sm border-light">
         <div className="card-body">
-        <h5 className="card-title">Mesa: {reservation.mesa}</h5>
-          <p className="card-text"> Reservación ID: {reservation.id}</p>
+          <h5 className="card-title">Mesa: {reservation.mesa}</h5>
+          <p className="card-text">Reservación ID: {reservation.id}</p>
           <p className="card-text">Cantidad de personas: {numeroDePersonas}</p>
           <div className="list-group">
             {chairs.map((chair) => (
@@ -60,8 +60,9 @@ const ReservationCard = ({ reservation }) => {
 };
 
 const ChairOrder = ({ chairNumber, orders, reservationId }) => {
-  const [products, setProducts] = useState([]); // Productos disponibles
-  const [selectedProduct, setSelectedProduct] = useState(""); // ID del producto seleccionado
+  const [products, setProducts] = useState([]); // Available products
+  const [selectedProduct, setSelectedProduct] = useState(""); // Selected product ID
+  const [isOpen, setIsOpen] = useState(false); // To track the collapse state
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -84,11 +85,11 @@ const ChairOrder = ({ chairNumber, orders, reservationId }) => {
   const handleAddProduct = async () => {
     if (!selectedProduct) return;
 
-    // Buscar el producto seleccionado
+    // Find selected product
     const product = products.find((p) => p.id === selectedProduct);
     if (!product) return;
 
-    // Crear un objeto con nombre y precio
+    // Create order object
     const updatedOrders = [
       ...(orders || []),
       { nombre: product.nombre, precio: product.precio },
@@ -108,30 +109,40 @@ const ChairOrder = ({ chairNumber, orders, reservationId }) => {
 
   return (
     <div className="mb-3">
-      <h6>Silla {chairNumber}</h6>
-      <ul className="list-group mb-2">
-        {orders.map((order, index) => (
-          <li key={index} className="list-group-item">
-            {order.nombre} - ${order.precio}
-          </li>
-        ))}
-      </ul>
-      <div className="input-group">
-        <select
-          className="form-select"
-          value={selectedProduct}
-          onChange={(e) => setSelectedProduct(e.target.value)}
-        >
-          <option value="">Seleccionar producto</option>
-          {products.map((product) => (
-            <option key={product.id} value={product.id}>
-              {product.nombre} - ${product.precio}
-            </option>
+      <h6
+        className="d-flex justify-content-between align-items-center cursor-pointer"
+        onClick={() => setIsOpen(!isOpen)} // Toggle collapse on chair click
+      >
+        <span>Silla {chairNumber}</span>
+        <span className="badge bg-info">{orders.length} Pedido(s)</span>
+      </h6>
+
+      <div className={`collapse ${isOpen ? "show" : ""}`}>
+        <ul className="list-group mb-2">
+          {orders.map((order, index) => (
+            <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
+              {order.nombre}
+              <span className="badge bg-primary">${order.precio}</span>
+            </li>
           ))}
-        </select>
-        <button className="btn btn-primary" onClick={handleAddProduct}>
-          Agregar
-        </button>
+        </ul>
+        <div className="input-group">
+          <select
+            className="form-select"
+            value={selectedProduct}
+            onChange={(e) => setSelectedProduct(e.target.value)}
+          >
+            <option value="">Seleccionar producto</option>
+            {products.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.nombre} - ${product.precio}
+              </option>
+            ))}
+          </select>
+          <button className="btn btn-success" onClick={handleAddProduct}>
+            Agregar
+          </button>
+        </div>
       </div>
     </div>
   );
