@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { getFirestore, collection, getDocs, updateDoc, doc, deleteDoc, addDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
 
 const Perfiles = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingUser, setEditingUser] = useState(null);
-  const [userData, setUserData] = useState({ email: "", role: "usuario", status: "Activo" });
-  const [newUserData, setNewUserData] = useState({ email: "", role: "usuario", status: "Activo" });
+  const [userData, setUserData] = useState({ email: "", role: "usuario", isActive: true });  // Renombramos el campo a isActive
+  const [newUserData, setNewUserData] = useState({ email: "", role: "usuario", isActive: true });
   const [showAddUserForm, setShowAddUserForm] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
 
   const db = getFirestore();
-  const auth = getAuth();
 
   // Cargar usuarios desde la colección `users`
   useEffect(() => {
@@ -27,33 +29,17 @@ const Perfiles = () => {
       } catch (error) {
         console.error("Error fetching users:", error);
         setLoading(false);
+        setErrorMessage("Hubo un error al cargar los usuarios.");
       }
     };
 
     fetchUsers();
   }, [db]);
 
-  // Actualizar rol del usuario
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { role: newRole });
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-      alert("Rol actualizado correctamente.");
-    } catch (error) {
-      console.error("Error updating role:", error);
-      alert("Error al actualizar el rol.");
-    }
-  };
-
   // Iniciar edición de usuario
   const handleEditClick = (user) => {
     setEditingUser(user.id);
-    setUserData({ email: user.email, role: user.role, status: user.status });
+    setUserData({ email: user.email, role: user.role, isActive: user.isActive });
   };
 
   // Guardar los cambios de edición
@@ -67,40 +53,51 @@ const Perfiles = () => {
         )
       );
       setEditingUser(null);  // Salir del modo de edición
-      alert("Usuario actualizado correctamente.");
+      setSuccessMessage("Usuario actualizado correctamente.");
     } catch (error) {
       console.error("Error saving user:", error);
-      alert("Error al guardar los cambios.");
+      setErrorMessage("Error al guardar los cambios.");
     }
   };
 
   // Eliminar usuario
-  const handleDeleteClick = async (userId) => {
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setShowDeleteConfirmation(true);  // Mostrar confirmación antes de eliminar
+  };
+
+  const confirmDelete = async () => {
     try {
-      const userRef = doc(db, "users", userId);
+      const userRef = doc(db, "users", userToDelete);
       await deleteDoc(userRef);
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userId));
-      alert("Usuario eliminado correctamente.");
+      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== userToDelete));
+      setShowDeleteConfirmation(false);
+      setSuccessMessage("Usuario eliminado correctamente.");
     } catch (error) {
       console.error("Error deleting user:", error);
-      alert("Error al eliminar el usuario.");
+      setErrorMessage("Error al eliminar el usuario.");
     }
   };
 
   // Agregar nuevo usuario
   const handleAddUserClick = async () => {
+    if (!newUserData.email || !newUserData.role || newUserData.isActive === null) {
+      setErrorMessage("Por favor, completa todos los campos.");
+      return;
+    }
+
     try {
       const newUserRef = await addDoc(collection(db, "users"), newUserData);
       setUsers((prevUsers) => [
         ...prevUsers,
         { id: newUserRef.id, ...newUserData }
       ]);
-      setNewUserData({ email: "", role: "usuario", status: "Activo" }); // Limpiar formulario
+      setNewUserData({ email: "", role: "usuario", isActive: true }); // Limpiar formulario
       setShowAddUserForm(false); // Cerrar formulario
-      alert("Nuevo usuario agregado.");
+      setSuccessMessage("Nuevo usuario agregado.");
     } catch (error) {
       console.error("Error adding user:", error);
-      alert("Error al agregar el usuario.");
+      setErrorMessage("Error al agregar el usuario.");
     }
   };
 
@@ -109,6 +106,9 @@ const Perfiles = () => {
   return (
     <div className="container mt-5">
       <h1>Gestión de Perfiles</h1>
+
+      {errorMessage && <div className="alert alert-danger">{errorMessage}</div>}
+      {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
       {/* Botón para mostrar el formulario de agregar usuario */}
       <button
@@ -137,15 +137,14 @@ const Perfiles = () => {
             <option value="cajero">Cajero</option>
             <option value="mesero">Mesero</option>
             <option value="recepcionista">Recepcionista</option>
-            <option value="usuario">Usuario</option>
           </select>
           <select
-            value={newUserData.status}
-            onChange={(e) => setNewUserData({ ...newUserData, status: e.target.value })}
+            value={newUserData.isActive}
+            onChange={(e) => setNewUserData({ ...newUserData, isActive: e.target.value === 'true' })}
             className="form-select mb-2"
           >
-            <option value="Activo">Activo</option>
-            <option value="Inactivo">Inactivo</option>
+            <option value={true}>Activo</option>
+            <option value={false}>Inactivo</option>
           </select>
           <button className="btn btn-success" onClick={handleAddUserClick}>
             Agregar Usuario
@@ -195,7 +194,6 @@ const Perfiles = () => {
                     <option value="cajero">Cajero</option>
                     <option value="mesero">Mesero</option>
                     <option value="recepcionista">Recepcionista</option>
-                    <option value="usuario">Usuario</option>
                   </select>
                 ) : (
                   user.role
@@ -204,15 +202,15 @@ const Perfiles = () => {
               <td>
                 {editingUser === user.id ? (
                   <select
-                    value={userData.status}
-                    onChange={(e) => setUserData({ ...userData, status: e.target.value })}
+                    value={userData.isActive}
+                    onChange={(e) => setUserData({ ...userData, isActive: e.target.value === 'true' })}
                     className="form-select"
                   >
-                    <option value="Activo">Activo</option>
-                    <option value="Inactivo">Inactivo</option>
+                    <option value={true}>Activo</option>
+                    <option value={false}>Inactivo</option>
                   </select>
                 ) : (
-                  user.status
+                  user.isActive ? "Activo" : "Inactivo"
                 )}
               </td>
               <td>
@@ -233,6 +231,43 @@ const Perfiles = () => {
           ))}
         </tbody>
       </table>
+
+      {/* Confirmación de eliminación */}
+      {showDeleteConfirmation && (
+        <div className="modal show" tabIndex="-1" style={{ display: "block" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirmar Eliminación</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowDeleteConfirmation(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este usuario?</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowDeleteConfirmation(false)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={confirmDelete}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

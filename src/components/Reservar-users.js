@@ -1,6 +1,7 @@
-// ReservationPage.js
 import React, { useState } from 'react';
 import emailjs from 'emailjs-com';
+import { db } from '../firebase'; // Importamos la configuración de Firebase
+import { collection, addDoc } from 'firebase/firestore';
 
 const ReservationPage = () => {
   const [formData, setFormData] = useState({
@@ -8,10 +9,11 @@ const ReservationPage = () => {
     fecha: '',
     hora: '',
     numeroDePersonas: '',
-    mesa: '',
+    mesa: null, // Mesa ya no se pregunta al usuario, se establece como null
     correo: '', // Campo para correo electrónico
+    estado: 'Pendiente', // Estado inicial de la reserva
   });
-  
+
   const [mensaje, setMensaje] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -28,13 +30,6 @@ const ReservationPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Verifica si la mesa está disponible (suponiendo que las mesas están numeradas del 1 al 12)
-    const availableTables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-    if (!availableTables.includes(parseInt(formData.mesa))) {
-      setMensaje('El número de mesa es inválido o no está disponible.');
-      return;
-    }
-
     // Verifica que el correo tenga un formato válido (simple)
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailPattern.test(formData.correo)) {
@@ -42,32 +37,51 @@ const ReservationPage = () => {
       return;
     }
 
-    // Envía el correo a través de EmailJS
+    // Configuración del correo a través de EmailJS
     const templateParams = {
       nombreCompleto: formData.nombreCompleto,
       fecha: formData.fecha,
       hora: formData.hora,
       numeroDePersonas: formData.numeroDePersonas,
-      mesa: formData.mesa,
-      correo: formData.correo, // Agrega el correo al templateParams
+      mesa: formData.mesa, // Mesa se envía como null
+      correo: formData.correo,
+      estado: 'Pendiente',
     };
 
-    // Aquí debes reemplazar estos valores con tus credenciales de EmailJS
-    const USER_ID = 'YOUR_USER_ID';
-    const SERVICE_ID = 'YOUR_SERVICE_ID';
-    const TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+    const USER_ID = 'up8P-mUB4GN94Koks';
+    const SERVICE_ID = 'service_sovzhta';
+    const TEMPLATE_ID = 'template_3hudx86';
 
-    emailjs
-      .send(SERVICE_ID, TEMPLATE_ID, templateParams, USER_ID)
-      .then((response) => {
-        console.log('¡Éxito!', response.status, response.text);
+    // Enviar el correo
+    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, USER_ID)
+      .then(() => {
+        // Guarda la reserva en Firestore
+        addDoc(collection(db, 'reservations'), {
+          ...formData,
+          estado: 'Pendiente', // Estado "Confirmada"
+          createdAt: new Date(),
+        });
+
         setIsSubmitted(true);
         setMensaje('Tu reservación ha sido realizada con éxito.');
       })
       .catch((err) => {
-        console.error('Error', err);
+        console.error('Error al enviar el correo', err);
         setMensaje('Error al enviar la reservación. Por favor, inténtalo de nuevo más tarde.');
       });
+  };
+
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let i = 0; i < 24; i++) {
+      slots.push(`${i < 10 ? '0' : ''}${i}:00`);
+    }
+    return slots;
+  };
+
+  const disablePastDates = () => {
+    const today = new Date().toISOString().split('T')[0];
+    return today;
   };
 
   return (
@@ -111,20 +125,26 @@ const ReservationPage = () => {
             value={formData.fecha}
             onChange={handleChange}
             required
+            min={disablePastDates()}
           />
         </div>
 
         <div className="col-md-6 position-relative">
           <label htmlFor="hora" className="form-label">Hora de Reservación</label>
-          <input
-            type="time"
-            className="form-control"
+          <select
+            className="form-select"
             id="hora"
             name="hora"
             value={formData.hora}
             onChange={handleChange}
             required
-          />
+          >
+            {getTimeSlots().map((slot) => (
+              <option key={slot} value={slot}>
+                {slot}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="col-md-6 position-relative">
@@ -141,27 +161,6 @@ const ReservationPage = () => {
           />
         </div>
 
-        <div className="col-md-6 position-relative">
-          <label htmlFor="mesa" className="form-label">Número de Mesa</label>
-          <select
-            className="form-select"
-            id="mesa"
-            name="mesa"
-            value={formData.mesa}
-            onChange={handleChange}
-            required
-          >
-            <option selected disabled value="">
-              Elige una mesa...
-            </option>
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((numMesa) => (
-              <option key={numMesa} value={numMesa}>
-                Mesa {numMesa}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <div className="col-12">
           <button className="btn btn-primary" type="submit">
             Enviar Reservación
@@ -172,6 +171,13 @@ const ReservationPage = () => {
       {mensaje && (
         <div className={`alert ${isSubmitted ? 'alert-success' : 'alert-danger'} mt-4`}>
           {mensaje}
+        </div>
+      )}
+
+      {/* Mostrar el estado de la reserva */}
+      {isSubmitted && (
+        <div className="mt-4">
+          <h4>Estado de la Reserva: {formData.estado}</h4>
         </div>
       )}
     </div>

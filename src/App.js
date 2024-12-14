@@ -1,3 +1,4 @@
+// App.js
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -8,30 +9,38 @@ import Register from './components/Register';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import Reservas from './components/Reservas';
-import ReservationPage from './components/ReservationPage'; // Asegúrate de importar la nueva página
+import ReservationPage from './components/Reservar-users';
 import Navbar from './components/Navbar';
+import Perfiles from './components/Perfiles';
+import Ordenes from './components/Ordenes'; // Importa el nuevo componente de Órdenes
 import { auth, db } from './firebase';
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    // Configura el listener para cambios en el estado de autenticación
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Si el usuario está autenticado, obtenemos la información adicional del usuario desde Firestore
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
-          setUser({ ...user, role: userDoc.data().role });
+          const userData = userDoc.data();
+          if (userData.isActive) {
+            setUser({ ...user, role: userData.role, isActive: userData.isActive });
+            setErrorMessage('');
+          } else {
+            setUser(null);
+            setErrorMessage('Tu cuenta está desactivada. Contacta con el administrador.');
+          }
         }
       } else {
         setUser(null);
+        setErrorMessage('');
       }
-      setLoading(false); // Establece loading en false cuando se completa la verificación
+      setLoading(false);
     });
 
-    // Cleanup listener al desmontar el componente
     return () => unsubscribe();
   }, []);
 
@@ -46,21 +55,34 @@ const App = () => {
   return (
     <Router>
       <div className="App">
-        {/* Renderizamos el Navbar siempre */}
         <Navbar user={user} />
+        {errorMessage && <div className="alert alert-danger text-center">{errorMessage}</div>}
+
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+          <Route path="/dashboard" element={user && user.isActive ? <Dashboard /> : <Navigate to="/login" />} />
           <Route 
             path="/reservas" 
-            element={user && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
+            element={user && user.isActive && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
               ? <Reservas /> 
-              : <Navigate to="/login" />}
+              : <Navigate to="/login" />} 
           />
-          {/* Ruta para usuarios no autenticados */}
           <Route path="/reservar" element={<ReservationPage />} />
+          <Route 
+            path="/perfiles" 
+            element={user && user.isActive && hasRole(['administrador']) 
+              ? <Perfiles /> 
+              : <Navigate to="/login" />} 
+          />
+          {/* Nueva ruta para Órdenes */}
+          <Route 
+            path="/ordenes" 
+            element={user && user.isActive && hasRole(['administrador', 'recepcionista']) 
+              ? <Ordenes /> 
+              : <Navigate to="/login" />} 
+          />
         </Routes>
       </div>
     </Router>
