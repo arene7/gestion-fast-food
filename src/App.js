@@ -1,4 +1,3 @@
-// App.js
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
@@ -7,12 +6,12 @@ import { doc, getDoc } from 'firebase/firestore';
 import Login from './components/Login';
 import Register from './components/Register';
 import Home from './components/Home';
-import Dashboard from './components/Dashboard';
 import Reservas from './components/Reservas';
 import ReservationPage from './components/Reservar-users';
 import Navbar from './components/Navbar';
 import Perfiles from './components/Perfiles';
-import Ordenes from './components/Ordenes'; // Importa el nuevo componente de Órdenes
+import Ordenes from './components/Ordenes'; // Importa el componente de Órdenes
+import Mesas from './components/Mesas'; // Importa el nuevo componente de Mesas
 import { auth, db } from './firebase';
 
 const App = () => {
@@ -60,9 +59,8 @@ const App = () => {
 
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+          <Route path="/login" element={user ? <Navigate to="/ordenes" /> : <Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={user && user.isActive ? <Dashboard /> : <Navigate to="/login" />} />
           <Route 
             path="/reservas" 
             element={user && user.isActive && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
@@ -76,11 +74,18 @@ const App = () => {
               ? <Perfiles /> 
               : <Navigate to="/login" />} 
           />
-          {/* Nueva ruta para Órdenes */}
+          {/* Ruta para Órdenes */}
           <Route 
             path="/ordenes" 
             element={user && user.isActive && hasRole(['administrador', 'recepcionista']) 
               ? <Ordenes /> 
+              : <Navigate to="/login" />} 
+          />
+          {/* Nueva ruta para Mesas */}
+          <Route 
+            path="/mesas" 
+            element={user && user.isActive && hasRole(['administrador', 'mesero']) 
+              ? <Mesas /> 
               : <Navigate to="/login" />} 
           />
         </Routes>

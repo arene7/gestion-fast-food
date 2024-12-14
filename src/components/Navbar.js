@@ -33,11 +33,37 @@ const Navbar = ({ user }) => {
             )}
             {user && (
               <>
-                {showLink(['administrador', 'cajero', 'mesero', 'recepcionista']) && <Link className="nav-link" to="/dashboard">Panel de Control</Link>}
-                {showLink(['administrador', 'recepcionista']) && <Link className="nav-link" to="/reservas">Reservas</Link>}
-                {showLink(['administrador', 'cajero']) && <Link className="nav-link" to="/ordenes">Órdenes</Link>}
-                {showLink(['administrador', 'cajero', 'mesero']) && <Link className="nav-link" to="/facturacion">Facturación</Link>}
-                {showLink(['administrador', 'cajero', 'mesero', 'recepcionista']) && <Link className="nav-link" to="/perfiles">Perfiles</Link>}
+                {/* Enlace a Reservas */}
+                {showLink(['administrador', 'recepcionista']) && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/reservas">Reservas</Link>
+                  </li>
+                )}
+                {/* Enlace a Órdenes */}
+                {showLink(['administrador', 'recepcionista']) && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/ordenes">Órdenes</Link>
+                  </li>
+                )}
+                {/* Enlace a Mesas */}
+                {showLink(['administrador', 'mesero']) && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/mesas">Mesas</Link>
+                  </li>
+                )}
+                {/* Enlace a Facturación */}
+                {showLink(['administrador', 'cajero', 'mesero']) && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/facturacion">Facturación</Link>
+                  </li>
+                )}
+                {/* Enlace a Perfiles */}
+                {showLink(['administrador', 'cajero', 'mesero', 'recepcionista']) && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/perfiles">Perfiles</Link>
+                  </li>
+                )}
+                {/* Cerrar Sesión */}
                 <li className="nav-item">
                   <Link className="nav-link" to="/logout">Cerrar Sesión</Link>
                 </li>

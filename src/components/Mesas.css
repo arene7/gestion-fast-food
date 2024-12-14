@@ -1,0 +1,33 @@
+.mesas-container {
+    padding: 20px;
+  }
+  
+  .card {
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .card-header {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+  }
+  
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+  }
+  
+  .producto {
+    display: block;
+    margin-left: 10px;
+    color: #555;
+  }
+  
+  .silla-icon {
+    font-size: 1.8rem;
+    color: #6c757d;
+  }
+  
