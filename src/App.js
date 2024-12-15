@@ -12,6 +12,7 @@ import Navbar from './components/Navbar';
 import Perfiles from './components/Perfiles';
 import Ordenes from './components/Ordenes'; // Importa el componente de Órdenes
 import Mesas from './components/Mesas'; // Importa el nuevo componente de Mesas
+import Facturacion from './components/Facturacion'; // Importa el componente de Facturación
 import { auth, db } from './firebase';
 
 const App = () => {
@@ -86,6 +87,13 @@ const App = () => {
             path="/mesas" 
             element={user && user.isActive && hasRole(['administrador', 'mesero']) 
               ? <Mesas /> 
+              : <Navigate to="/login" />} 
+          />
+          {/* Nueva ruta para Facturación */}
+          <Route 
+            path="/facturacion" 
+            element={user && user.isActive && hasRole(['administrador', 'cajero']) 
+              ? <Facturacion /> 
               : <Navigate to="/login" />} 
           />
         </Routes>
