@@ -327,7 +327,7 @@ const ReservationForm = () => {
           >
             <option value="Pendiente">Pendiente</option>
             <option value="Confirmada">Confirmada</option>
-            <option value="En Proceso">En Proceso</option>
+            <option value="En proceso">En Proceso</option>
             <option value="Cancelada">Cancelada</option>
           </select>
         </div>
