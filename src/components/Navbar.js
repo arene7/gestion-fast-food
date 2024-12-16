@@ -1,15 +1,27 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import './Navbar.css';  // Si deseas aplicar estilos personalizados
 
 const Navbar = ({ user }) => {
-  // Función para mostrar enlaces dependiendo del rol del usuario
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      navigate('/login'); // Redirige al usuario a la página de inicio de sesión después de cerrar sesión
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
   const showLink = (roles) => roles.includes(user?.role);
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">Gestión Fast Food</Link> {/* Nombre de la aplicación */}
+        <Link className="navbar-brand" to="/">Gestión Fast Food</Link>
         <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
@@ -33,39 +45,33 @@ const Navbar = ({ user }) => {
             )}
             {user && (
               <>
-                {/* Enlace a Reservas */}
                 {showLink(['administrador', 'recepcionista']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/reservas">Reservas</Link>
                   </li>
                 )}
-                {/* Enlace a Órdenes */}
                 {showLink(['administrador', 'recepcionista']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/ordenes">Órdenes</Link>
                   </li>
                 )}
-                {/* Enlace a Mesas */}
                 {showLink(['administrador', 'mesero']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/mesas">Mesas</Link>
                   </li>
                 )}
-                {/* Enlace a Facturación */}
                 {showLink(['administrador', 'cajero', 'mesero']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/facturacion">Facturación</Link>
                   </li>
                 )}
-                {/* Enlace a Perfiles */}
                 {showLink(['administrador', 'cajero', 'mesero', 'recepcionista']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/perfiles">Perfiles</Link>
                   </li>
                 )}
-                {/* Cerrar Sesión */}
                 <li className="nav-item">
-                  <Link className="nav-link" to="/logout">Cerrar Sesión</Link>
+                  <button className="btn btn-link nav-link" onClick={handleLogout}>Cerrar Sesión</button>
                 </li>
               </>
             )}

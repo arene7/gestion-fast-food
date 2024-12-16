@@ -313,6 +313,22 @@ const ReservationForm = () => {
           </select>
         </div>
 
+        <div className="col-md-6 position-relative">
+        <label htmlFor="correo" className="form-label">
+          Correo Electrónico
+        </label>
+        <input
+          type="email"
+          className="form-control"
+          id="correo"
+          name="correo"
+          value={formData.correo}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+
         {/* Campo de estado visible siempre */}
         <div className="col-md-6 position-relative">
           <label htmlFor="estado" className="form-label">
