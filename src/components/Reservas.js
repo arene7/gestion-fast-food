@@ -62,24 +62,20 @@ const ReservationForm = () => {
     });
   };
 
-  // Verifica si la mesa está disponible para la fecha y hora seleccionada
-  // const isTableAvailable = (mesa, fecha, hora) => {
-  //   return !reservas.some(
-  //     (reserva) =>
-  //       reserva.mesa === mesa &&
-  //       reserva.fecha === fecha &&
-  //       reserva.hora === hora
-  //   );
-  // };
-
-  // Verifica que no haya reservas repetidas en la misma mesa en el mismo intervalo de hora
+  // Verifica si la mesa está disponible en el intervalo de hora seleccionado
   const isTableAvailableInHourRange = (mesa, fecha, hora) => {
     const hourRangeStart = parseInt(hora.split(':')[0]);
     const hourRangeEnd = hourRangeStart + 1;
 
-    // Busca reservas de la misma mesa que caigan en el intervalo de hora seleccionado
+    // Excluir la reserva que estamos editando
     return !reservas.some((reserva) => {
       const reservaHora = parseInt(reserva.hora.split(':')[0]);
+
+      // Excluir la reserva que estamos editando
+      if (editingReserva && reserva.id === editingReserva.id) {
+        return false;
+      }
+
       return (
         reserva.mesa === mesa &&
         reserva.fecha === fecha &&
@@ -221,8 +217,7 @@ const ReservationForm = () => {
     <div className="container">
       <h2 className="my-4">Hacer una Reservación</h2>
       <form
-        className="row g-3 needs-validation"
-        noValidate
+        className="row g-3"
         onSubmit={editingReserva ? handleSaveEdit : handleSubmit}
       >
         <div className="col-md-6 position-relative">
