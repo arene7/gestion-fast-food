@@ -50,7 +50,7 @@ const Navbar = ({ user }) => {
                     <Link className="nav-link" to="/reservas">Reservas</Link>
                   </li>
                 )}
-                {showLink(['administrador', 'recepcionista']) && (
+                {showLink(['administrador', 'recepcionista', 'cajero' ]) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/ordenes">Órdenes</Link>
                   </li>
@@ -60,12 +60,12 @@ const Navbar = ({ user }) => {
                     <Link className="nav-link" to="/mesas">Mesas</Link>
                   </li>
                 )}
-                {showLink(['administrador', 'cajero', 'mesero']) && (
+                {showLink(['administrador', 'cajero']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/facturacion">Facturación</Link>
                   </li>
                 )}
-                {showLink(['administrador', 'cajero', 'mesero', 'recepcionista']) && (
+                {showLink(['administrador']) && (
                   <li className="nav-item">
                     <Link className="nav-link" to="/perfiles">Perfiles</Link>
                   </li>

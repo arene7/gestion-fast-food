@@ -1,11 +1,12 @@
 // src/components/Dashboard.js
 import React from 'react';
+import './Dashboard.css';  // Para aplicar estilos personalizados
 
 const Dashboard = () => {
   return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Aqui va el hello</p>
+    <div className="dashboard-container">
+      <h1>Bienvenido al Dashboard</h1>
+
     </div>
   );
 };

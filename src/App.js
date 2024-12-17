@@ -64,7 +64,7 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route 
             path="/reservas" 
-            element={user && user.isActive && hasRole(['administrador', 'cajero', 'mesero', 'recepcionista']) 
+            element={user && user.isActive && hasRole(['administrador', 'recepcionista']) 
               ? <Reservas /> 
               : <Navigate to="/login" />} 
           />
@@ -78,7 +78,7 @@ const App = () => {
           {/* Ruta para Órdenes */}
           <Route 
             path="/ordenes" 
-            element={user && user.isActive && hasRole(['administrador', 'recepcionista']) 
+            element={user && user.isActive && hasRole(['administrador', 'recepcionista', 'cajero']) 
               ? <Ordenes /> 
               : <Navigate to="/login" />} 
           />
