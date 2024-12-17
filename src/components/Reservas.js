@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase'; // Asegúrate de importar tu configuración de Firebase
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import emailjs from 'emailjs-com';
 
 const ReservationForm = () => {
@@ -11,7 +11,7 @@ const ReservationForm = () => {
     numeroDePersonas: '',
     mesa: '',
     correo: '',
-    estado: 'Pendiente', // Ahora el estado también se envía al crear una nueva reserva
+    estado: 'Confirmada', // Ahora el estado también se envía al crear una nueva reserva
   });
   const [mensaje, setMensaje] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -62,49 +62,66 @@ const ReservationForm = () => {
     });
   };
 
-  // Verifica si la mesa está disponible en el intervalo de hora seleccionado
-  const isTableAvailableInHourRange = (mesa, fecha, hora) => {
-    const hourRangeStart = parseInt(hora.split(':')[0]);
-    const hourRangeEnd = hourRangeStart + 1;
+const isTableAvailableInHourRange = (mesa, fecha, hora) => {
+  const hourRangeStart = parseInt(hora.split(':')[0]);
+  const hourRangeEnd = hourRangeStart + 1;
+
+  // Excluir la reserva que estamos editando
+  return !reservas.some((reserva) => {
+    // Verifica si reserva.hora está definido antes de intentar hacer split
+    if (!reserva.hora) {
+      return false;
+    }
+    
+    const reservaHora = parseInt(reserva.hora.split(':')[0]);
 
     // Excluir la reserva que estamos editando
-    return !reservas.some((reserva) => {
-      const reservaHora = parseInt(reserva.hora.split(':')[0]);
+    if (editingReserva && reserva.id === editingReserva.id) {
+      return false;
+    }
 
-      // Excluir la reserva que estamos editando
-      if (editingReserva && reserva.id === editingReserva.id) {
-        return false;
+    return (
+      reserva.mesa === mesa &&
+      reserva.fecha === fecha &&
+      (reservaHora === hourRangeStart || reservaHora === hourRangeEnd)
+    );
+  });
+};
+
+ // Handle deleting a reservation
+  const handleDelete = async (id) => {
+      try {
+        const reservaRef = doc(db, 'reservations', id);
+        await deleteDoc(reservaRef);
+        setMensaje('Reserva eliminada con éxito.');
+        fetchReservas(); // Reload reservations after deleting
+      } catch (error) {
+        console.error('Error al eliminar la reserva:', error);
+        setMensaje('Error al eliminar la reserva. Por favor, inténtalo de nuevo más tarde.');
       }
+    };
 
-      return (
-        reserva.mesa === mesa &&
-        reserva.fecha === fecha &&
-        (reservaHora === hourRangeStart || reservaHora === hourRangeEnd)
-      );
-    });
-  };
 
   // Verifica si el número de personas no excede el número de sillas de la mesa seleccionada
   const isValidNumberOfPeople = (mesa, numeroDePersonas) => {
     return numeroDePersonas <= mesas[mesa];
   };
 
-  // Maneja el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Verifica si la mesa está disponible en el intervalo de hora seleccionado
     if (!isTableAvailableInHourRange(formData.mesa, formData.fecha, formData.hora)) {
       setMensaje('La mesa ya está ocupada en ese intervalo de hora.');
       return;
     }
-
+  
     // Verifica que el número de personas no exceda el límite de sillas de la mesa seleccionada
     if (!isValidNumberOfPeople(formData.mesa, formData.numeroDePersonas)) {
       setMensaje(`La mesa ${formData.mesa} tiene un máximo de ${mesas[formData.mesa]} sillas.`);
       return;
     }
-
+  
     // Envía el correo a través de EmailJS
     const templateParams = {
       nombreCompleto: formData.nombreCompleto,
@@ -115,22 +132,27 @@ const ReservationForm = () => {
       correo: formData.correo,
       estado: formData.estado, // El estado se incluye también al crear la reserva
     };
-
-    emailjs
-      .send('service_sovzhta', 'template_3hudx86', templateParams, 'up8P-mUB4GN94Koks')
-      .then(
-        (response) => {
-          console.log('¡Éxito!', response.status, response.text);
-          setIsSubmitted(true);
-          setMensaje('Tu reservación ha sido realizada con éxito.');
-          fetchReservas(); // Recargar reservas después de agregar una nueva
-        },
-        (err) => {
-          console.error('Error', err);
-          setMensaje('Error al enviar la reservación. Por favor, inténtalo de nuevo más tarde.');
-        }
-      );
+  
+    emailjs.send('service_sovzhta', 'template_3hudx86', templateParams, 'up8P-mUB4GN94Koks')
+      .then(async () => {
+        // Guarda la reserva en Firestore
+        await addDoc(collection(db, 'reservations'), {
+          ...formData,
+          estado:  formData.estado, // Estado "Pendiente"
+          createdAt: new Date(),
+        });
+  
+        setIsSubmitted(true);
+        setMensaje('Tu reservación ha sido realizada con éxito.');
+        fetchReservas(); // Recargar reservas después de agregar una nueva
+      })
+      .catch((err) => {
+        console.error('Error al enviar el correo', err);
+        setMensaje('Error al enviar la reservación. Por favor, inténtalo de nuevo más tarde.');
+      });
   };
+  
+  
 
   // Maneja la edición de una reserva
   const handleEdit = (reserva) => {
@@ -385,8 +407,17 @@ const ReservationForm = () => {
               <td>{reserva.mesa}</td>
               <td>{reserva.estado}</td>
               <td>
-                <button className="btn btn-warning" onClick={() => handleEdit(reserva)}>
+                <button
+                  className="btn btn-warning btn-sm me-2"
+                  onClick={() => handleEdit(reserva)}
+                >
                   Editar
+                </button>
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => handleDelete(reserva.id)}
+                >
+                  Eliminar
                 </button>
               </td>
             </tr>

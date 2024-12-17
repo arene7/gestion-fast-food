@@ -15,7 +15,7 @@ const Facturacion = () => {
   useEffect(() => {
     const fetchReservaciones = async () => {
       const reservacionesRef = collection(db, "reservations");
-      const q = query(reservacionesRef, where("estado", "==", "En proceso")); 
+      const q = query(reservacionesRef, where("estado", "==", "Cerrada")); 
       const snapshot = await getDocs(q);
 
       const data = snapshot.docs.map((doc) => {
